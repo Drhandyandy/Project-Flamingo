@@ -1,6 +1,8 @@
-# main.py
+# Placeholder main application file
+# TODO: Add your application code here
 
-# This is a placeholder main.py file for Project Flamingo.
+def main():
+    print("Project Flamingo is running!")
 
-if __name__ == '__main__':
-    print("Hello, World!")
+if __name__ == "__main__":
+    main()
