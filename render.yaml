@@ -1,0 +1,4 @@
+# Render configuration for Python 3
+
+runtime: python
+version: "3.8"
