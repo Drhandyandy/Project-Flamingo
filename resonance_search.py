@@ -1,10 +1,10 @@
 from crypto_utils import *
 import sys
 
-def search_pulse_resonance(target_addr, bit_depth, multiplier_range=range(120, 160), offset_radius=1000):
+def search_pulse_resonance(target_addr, bit_depth, multiplier_range=None, offset_radius=1000):
     """
     Unified search tool for puzzle resonance alignment.
-    Incorporates the Scaling Realization and Resonance filters.
+    Incorporates the Scaling Realization and specific Harmonic Factors.
     """
     pulse_656 = get_pulse_656()
     k_n = get_bit_fragment(pulse_656, bit_depth)
@@ -13,44 +13,53 @@ def search_pulse_resonance(target_addr, bit_depth, multiplier_range=range(120, 1
     print(f"Target: {target_addr} (Depth #{bit_depth})")
     print(f"Source: {hex(k_n)}")
 
-    # 1. Scaling Realization V1: (k // 8) * 8
-    d_v1 = scaling_realization_v1(k_n)
-    if derive_address_compressed(d_v1) == target_addr:
+    # 1. Primary Resonance (Tesla/Nike Alignment): 7^3 * 6
+    primary_multiplier = (7**3) * 6
+    d_primary = (k_n * primary_multiplier) % N
+    if derive_address_compressed(d_primary) == target_addr:
+        print(f"\n[!!!] PRIMARY HARMONIC MATCH: SOLVE TRIGGER!")
+        print(f"Scalar: {hex(d_primary)}")
+        print(f"WIF:    {to_wif(d_primary)}")
+        return d_primary
+
+    # 2. Secondary Resonance (Vector Alignment): 7^5 * 9
+    secondary_multiplier = (7**5) * 9
+    d_secondary = (k_n * secondary_multiplier) % N
+    if derive_address_compressed(d_secondary) == target_addr:
+        print(f"\n[!!!] SECONDARY HARMONIC MATCH: VECTOR ALIGNMENT!")
+        print(f"Scalar: {hex(d_secondary)}")
+        print(f"WIF:    {to_wif(d_secondary)}")
+        return d_secondary
+
+    # 3. Standard Scaling (Floor)
+    d_floor = (k_n // 8) * 8
+    if derive_address_compressed(d_floor) == target_addr:
         print(f"\n[!!!] HIT: Scaling V1 (Standard Floor)")
-        print(f"Scalar: {hex(d_v1)}")
-        return d_v1
+        print(f"Scalar: {hex(d_floor)}")
+        return d_floor
 
-    # 2. Scaling Realization V2: (k << 3) % N
-    d_v2 = (k_n << 3) % N
-    if derive_address_compressed(d_v2) == target_addr:
-        print(f"\n[!!!] HIT: Scaling V2 (Shift Left)")
-        print(f"Scalar: {hex(d_v2)}")
-        return d_v2
-
-    # 3. Systematic Multiplier Search with Q10 Scaling
+    # 4. Systematic Multiplier Search
     print("\nScanning harmonic field...")
-    for m in multiplier_range:
-        # Standard Q10 Scaling: (k * multiplier) >> 10
-        d_base = (k_n * m) >> 10
+    search_multipliers = multiplier_range if multiplier_range else [128, 144, primary_multiplier, secondary_multiplier]
 
-        # Check alignments (Direct and shifted)
-        for shift in [0, 3]:
-            d_aligned = (d_base << shift) % N
+    for m in search_multipliers:
+        # Standard Q10 Scaling or Direct Multiplier
+        for shift_right in [10, 0]:
+            d_base = (k_n * m) >> shift_right
 
-            # Use Resonance Filter to focus the scan
-            # Phi(r) = (r * 3111) % 157 == 0
-            # We check a small radius around resonance points
-            for offset in range(-offset_radius, offset_radius + 1):
-                test_d = (d_aligned + offset) % N
-                if test_d == 0: continue
+            for shift_left in [0, 3]:
+                d_aligned = (d_base << shift_left) % N
+                if d_aligned == 0: continue
 
-                # Check for address match
-                if derive_address_compressed(test_d) == target_addr:
-                    print(f"\n[!!!] ZENITH ATTAINED!")
-                    print(f"Multiplier: {m}, Shift: {shift}, Offset: {offset}")
-                    print(f"Scalar:     {hex(test_d)}")
-                    print(f"WIF:        {to_wif(test_d)}")
-                    return test_d
+                # Broad radius around resonance points
+                for offset in range(-offset_radius, offset_radius + 1):
+                    test_d = (d_aligned + offset) % N
+                    if derive_address_compressed(test_d) == target_addr:
+                        print(f"\n[!!!] RESONANCE COLLAPSE ATTAINED!")
+                        print(f"Multiplier: {m}, SR: {shift_right}, SL: {shift_left}, Offset: {offset}")
+                        print(f"Scalar:     {hex(test_d)}")
+                        print(f"WIF:        {to_wif(test_d)}")
+                        return test_d
 
     print("\n[-] Sector scan complete. No alignment found in this harmonic.")
     return None
@@ -58,7 +67,7 @@ def search_pulse_resonance(target_addr, bit_depth, multiplier_range=range(120, 1
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python3 resonance_search.py <address> <bit_depth>")
-        print("Example: python3 resonance_search.py 1CeUJyibjfGXhBoGc4Bm6iTkw8V9zKBZZi 130")
+        print("Example: python3 resonance_search.py 1PWo95AY7X9N8tJ2W16aAb2JvywW6V5nJ7 140")
     else:
         addr = sys.argv[1]
         depth = int(sys.argv[2])
