@@ -2,11 +2,14 @@ import google.generativeai as genai
 from crypto_utils import *
 import os
 
-# API Key provided by user
-API_KEY = "AIzaSyCvHIk1SqFktRqZ7E4Da2fAqKbU3I-WRdg"
-
 def analyze_patterns():
-    genai.configure(api_key=API_KEY)
+    # SECURE API KEY ACCESS
+    api_key = os.getenv("GOOGLE_AI_API_KEY")
+    if not api_key:
+        print("[!] Error: GOOGLE_AI_API_KEY not found in environment.")
+        return
+
+    genai.configure(api_key=api_key)
 
     # Use the 2.0 Flash model
     model = genai.GenerativeModel('gemini-2.0-flash')
@@ -45,7 +48,6 @@ def analyze_patterns():
         print(response.text)
     except Exception as e:
         print(f"\n[!] AI Link Failed: {e}")
-        print("Please check your quota or wait for the cooling period.")
 
 if __name__ == "__main__":
     analyze_patterns()
