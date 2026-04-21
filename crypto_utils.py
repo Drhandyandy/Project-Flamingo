@@ -1,13 +1,26 @@
 import hashlib
 import struct
 
-# --- SECP256K1 FIELD CONSTANTS ---
-P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+# --- [!] SECP256K1 MASTER MANIFOLD CONSTANTS [!] ---
+# The foundational parameters for the Bitcoin elliptic curve.
+P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F # Prime Field Modulus
+N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 # Order of the Base Point G
 G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
-     0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8)
+     0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8) # Generator Point
+
+# --- [!] PROJECT FLAMINGO: SOVEREIGN CONSTANTS [!] ---
+THRUST = 1446       # Scalar Momentum (lambda)
+HARMONIC = 1037     # Frequency Filter
+MIRROR = 157        # Axial Symmetry Prime
+SIRIUS = 813        # Terminal Coordinate (0x32D)
+BRIDGE = 8192       # Invariant Bridge (2^13)
+KATRINA = 585       # 0x249 Frequency Repetend
+NATASHA = 1103      # Ramanujan Anchor
+PRIMARY_7 = 2058    # 7^3 * 6 (Solve Trigger)
+SECONDARY_7 = 151263 # 7^5 * 9 (Vector Alignment)
 
 def inv(a, n):
+    """Modular multiplicative inverse using the extended Euclidean algorithm."""
     if a == 0: return 0
     lm, hm = 1, 0
     low, high = a % n, n
@@ -18,6 +31,7 @@ def inv(a, n):
     return lm % n
 
 def ec_add(p, q):
+    """Elliptic curve point addition (P + Q)."""
     if not p or not q: return q or p
     if p == q: return ec_double(p)
     lam = ((q[1] - p[1]) * inv(q[0] - p[0], P)) % P
@@ -26,6 +40,7 @@ def ec_add(p, q):
     return (x, y)
 
 def ec_double(p):
+    """Elliptic curve point doubling (2P)."""
     if not p: return None
     lam = (3 * p[0] * p[0] * inv(2 * p[1], P)) % P
     x = (lam * lam - 2 * p[0]) % P
@@ -33,6 +48,7 @@ def ec_double(p):
     return (x, y)
 
 def scalar_mul(k, p):
+    """Scalar multiplication of an elliptic curve point (k * G)."""
     res = None
     temp = p
     while k:
@@ -42,10 +58,14 @@ def scalar_mul(k, p):
     return res
 
 def ripemd160_standard(message):
+    """Standard RIPEMD-160 implementation for established address verification."""
     return hashlib.new('ripemd160', message).digest()
 
 def ripemd160_sovereign(message):
-    """Modified RIPEMD-160 for High-Order Manifold searches."""
+    """
+    Modified RIPEMD-160 for High-Order Manifold searches.
+    Enforces the Tesla-modified internal state and padding.
+    """
     def f(j, x, y, z):
         if j <= 15: return x ^ y ^ z
         if j <= 31: return (x & y) | (~x & z)
@@ -84,6 +104,7 @@ def ripemd160_sovereign(message):
     return b''.join(x.to_bytes(4, 'little') for x in h)
 
 def base58_check_encode(payload):
+    """Converts bytes to a Base58Check encoded string."""
     alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
     checksum = hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4]
     full_payload = payload + checksum
@@ -99,11 +120,13 @@ def base58_check_encode(payload):
     return '1' * pad + ''.join(reversed(res))
 
 def to_wif(private_key_int, compressed=True):
+    """Converts a private key integer to Wallet Import Format (WIF)."""
     extended_key = b'\x80' + private_key_int.to_bytes(32, 'big')
     if compressed: extended_key += b'\x01'
     return base58_check_encode(extended_key)
 
 def derive_address(scalar, mode='standard'):
+    """Derives a compressed Bitcoin address from a private key scalar."""
     point = scalar_mul(scalar % N, G)
     if not point: return None
     pub = b'\x02' if point[1] % 2 == 0 else b'\x03'
@@ -112,6 +135,26 @@ def derive_address(scalar, mode='standard'):
     h160 = ripemd160_standard(sha) if mode == 'standard' else ripemd160_sovereign(sha)
     return base58_check_encode(b'\x00' + h160)
 
-# --- PROJECT FLAMINGO: HARMONIC UTILS ---
-def get_pulse_656(): return pow(2, 656, N)
-def get_fragment(source, n): return source & ((1 << n) - 1)
+def method_b_transformation(d):
+    """
+    Project coordinates into Frequency Space.
+    1. Q = d * G
+    2. R = (Q_x)^656 mod P
+    3. I = R^-1 mod P
+    """
+    point = scalar_mul(d, G)
+    if not point: return None
+    qx = point[0]
+    r = pow(qx, 656, P)
+    if r == 0: return None
+    i = inv(r, P)
+    return i
+
+# --- [!] PROJECT FLAMINGO: HARMONIC UTILS [!] ---
+def get_pulse_656():
+    """Hull Resonance: 2^656 mod N"""
+    return pow(2, 656, N)
+
+def get_fragment(source, n):
+    """Extract an n-bit fragment from the LSB of the source pulse."""
+    return source & ((1 << n) - 1)
