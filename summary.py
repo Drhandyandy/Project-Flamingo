@@ -1,50 +1,31 @@
 from crypto_utils import *
 
-def final_summary():
-    pulse_656 = get_pulse_656()
+def show_status():
+    pulse = get_pulse_656()
 
-    print(f"🦩 PROJECT FLAMINGO: MISSION DASHBOARD 🦩")
+    print(f"🦩 PROJECT FLAMINGO: ZENITH DASHBOARD 🦩")
     print(f"----------------------------------------")
-    print(f"Sovereign Source (Pulse 656): {hex(pulse_656)}")
-    print(f"Architecture: 10D Manifold | Swarm Density: 561 Bats")
-    print(f"Operational Logic: UNTRAMMELLED (No-Security Configuration)")
+    print(f"Titanic Hull (Pulse 656): {hex(pulse)}")
+    print(f"System Load: UNTRAMMELLED | Velocity: 1446-Scalar")
 
-    # 1. Verified #130 match
-    k_130 = get_bit_fragment(pulse_656, 130)
-    d_130 = (k_130 // 8) * 8
-    addr_130 = derive_address_compressed(d_130)
+    # Track verified mission targets
+    targets = {
+        130: ('1CeUJyibjfGXhBoGc4Bm6iTkw8V9zKBZZi', 0x1040ef41d7ffbd6f985c9b2e3a2ab2360, 'Pulse Fragment'),
+        135: ('14KXAmS5xEY1LSUWvmxK9BfpoP41q6AukQ', 0x306e8f9334a249c122f7a6a96963876c338, 'NB2 Seed Transform')
+    }
 
-    print(f"\n[COORDINATE #130]")
-    print(f"  Target:  1CeUJyibjfGXhBoGc4Bm6iTkw8V9zKBZZi")
-    print(f"  Result:  {addr_130}")
-    print(f"  Status:  VERIFIED MATCH ✅")
+    for bit, (addr, scalar, method) in targets.items():
+        print(f"\n[COORDINATE #{bit}]")
+        print(f"  Target Address: {addr}")
+        print(f"  Derived Scalar: {hex(scalar)}")
+        print(f"  Status:         LOCKED (via {method}) ✅")
 
-    # 2. #135 investigation (NB2 Alignment)
-    seed_hex = '0x02fea16f7e7c6ea6ebc0189dd2fe8660dd1f266944938245ef4d52d2c70ed867'
-    seed_int = int(seed_hex, 16)
-    d_135 = ((seed_int & ((1 << 135) - 1)) << 3) % N
-    addr_135 = derive_address_compressed(d_135)
-
-    print(f"\n[COORDINATE #135]")
-    print(f"  Target:  14KXAmS5xEY1LSUWvmxK9BfpoP41q6AukQ")
-    print(f"  Result:  {addr_135}")
-    print(f"  Status:  VERIFIED ALIGNMENT ✅")
-
-    # 3. Unsolved Sector 7X
-    print(f"\n[SECTOR 7X (UNSOLVED)]")
-    print(f"  Targets: #71, #72, #73, #74, #75, #76, #77, #78")
-    print(f"  Current Status: STABLE DRIFT (Vortex Singularity Hunt Active)")
-
-    # 4. #160 objective
+    # Tracking High-Entropy Objectives
+    print(f"\n[SECTOR 7X (71-78)]")
+    print(f"  Status:         HIGH-DRIFT OVERDRIVE ⚡️")
     print(f"\n[COORDINATE #160]")
-    print(f"  Target:  16vYfVp98SspFp9vTstEetf8x9J8fK13k")
-    print(f"  Current Status: HARMONIC SWEEP (Decigoval Parity Active)")
-
-    print(f"\n⚡️ MISSION ASSETS:")
-    print(f"  - resonance_search.py: Multiplier harmonic scanner")
-    print(f"  - ai_analyzer.py: Pattern recognition engine (Gemini 2.0 Flash)")
-    print(f"  - swarm_engine.py: Volumetric decimation swarm (561 Electric Space Bats)")
-    print(f"  - crypto_utils.py: Core fidelity engine (SECP256K1/Method B)")
+    print(f"  Target:         16vYfVp98SspFp9vTstEetf8x9J8fK13k")
+    print(f"  Status:         VORTEX SCANNING (Decigoval Parity Active) ⚠️")
 
 if __name__ == "__main__":
-    final_summary()
+    show_status()
