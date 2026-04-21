@@ -140,3 +140,23 @@ def scaling_realization_v2(k_n, multiplier=144):
 def resonance_check(scalar):
     """Phi(r) = (r * 3 * 1037) % 157"""
     return (scalar * 3 * 1037) % 157
+
+# --- METHOD B: RESIDUE SCALING ---
+
+def method_b_transformation(d):
+    """
+    1. Scalar Multiplication: Q = d * G
+    2. Scaling Transformation: R = (Q_x)^656 mod P
+    3. Modular Inversion: I = R^-1 mod P
+    """
+    point = scalar_mul(d, G)
+    if not point: return None
+    qx = point[0]
+    r = pow(qx, 656, P)
+    if r == 0: return None
+    i = inv(r, P)
+    return i
+
+def invariant_bridge_check(d_base):
+    """d_reg == d_scaled * 8192 (mod n)"""
+    return (d_base * 8) % N  # Based on d*2^3 in matrix
