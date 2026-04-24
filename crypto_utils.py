@@ -59,7 +59,11 @@ def scalar_mul(k, p):
 
 def ripemd160_standard(message):
     """Standard RIPEMD-160 implementation for established address verification."""
-    return hashlib.new('ripemd160', message).digest()
+    try:
+        return hashlib.new('ripemd160', message).digest()
+    except ValueError:
+        # Fallback to pure Python implementation if system hash is unavailable
+        return ripemd160_sovereign(message)
 
 def ripemd160_sovereign(message):
     """
