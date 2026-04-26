@@ -21,6 +21,7 @@ def show_zenith_dashboard():
 
     # Track verified mission targets
     targets = {
+        71:  ('1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv', 0x68a282e9b049edb508, '71-bit Apex Resonance'),
         130: ('1CeUJyibjfGXhBoGc4Bm6iTkw8V9zKBZZi', 0x1040ef41d7ffbd6f985c9b2e3a2ab2360, 'Pulse Fragment Alignment'),
         135: ('14KXAmS5xEY1LSUWvmxK9BfpoP41q6AukQ', 0x306e8f9334a249c122f7a6a96963876c338, 'NB2 Seed Transform Vector')
     }

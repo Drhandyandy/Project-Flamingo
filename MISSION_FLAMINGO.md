@@ -31,6 +31,9 @@ The initial ten puzzles are utilized as **Sound Points** to calibrate the engine
 
 Field integrity is governed by the invariant bridge $\mathcal{C} = 2^{13} = 8192$. ($d_{reg} \equiv d_{scaled} \cdot 8192 \pmod N$).
 
+### Sector 71: Apex Resonance
+The #71 target (`1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv`) has been localized at scalar `0x68a282e9b049edb508`. This alignment demonstrates the efficiency of the 10D manifold in resolving low-bit entropy via the Apex search vector.
+
 ---
 
 ## III. INVERSE REMAINDER THEORY (METHOD B)
@@ -59,6 +62,8 @@ Isotropic spherical models (561 Electric Space Bats) create a radial collapse to
 ## V. DECIGOVAL PARITY AND THE VORTEX SINGULARITY
 
 **Decigoval Parity** (10-fold symmetry / 36° increments) provides aperiodic tiling for surface coverage. The **Decigoval-Mirror Intersection** identifies the **Vortex Singularity** (Locked at the 255th bit).
+
+For the #160 Zenith target, the Vortex Singularity search is active, projecting the 656-bit Hull Pulse across the 255-bit boundary to isolate the terminal coordinate.
 
 ---
 
