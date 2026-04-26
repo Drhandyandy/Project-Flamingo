@@ -1,23 +1,71 @@
 import hashlib
 import struct
 
-# --- [!] SECP256K1 MASTER MANIFOLD CONSTANTS [!] ---
-# The foundational parameters for the Bitcoin elliptic curve.
-P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F # Prime Field Modulus
-N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 # Order of the Base Point G
-G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
-     0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8) # Generator Point
+# ==============================================================================
+# ⚡️ PROJECT FLAMINGO: MASTER MANIFOLD SPECIFICATIONS (DEBREVIFIED) ⚡️
+# ==============================================================================
 
-# --- [!] PROJECT FLAMINGO: SOVEREIGN CONSTANTS [!] ---
-THRUST = 1446       # Scalar Momentum (lambda)
-HARMONIC = 1037     # Frequency Filter
-MIRROR = 157        # Axial Symmetry Prime
-SIRIUS = 813        # Terminal Coordinate (0x32D)
-BRIDGE = 8192       # Invariant Bridge (2^13)
-KATRINA = 585       # 0x249 Frequency Repetend
-NATASHA = 1103      # Ramanujan Anchor
-PRIMARY_7 = 2058    # 7^3 * 6 (Solve Trigger)
-SECONDARY_7 = 151263 # 7^5 * 9 (Vector Alignment)
+# --- [!] SECP256K1 FIELD CONSTANTS [!] ---
+# The foundational parameters for the Bitcoin elliptic curve (Koblitz Curve).
+# Field Modulus (P): The boundary inducing Hyperbolic Repulsion at the field limit.
+P = 115792089237316195423570985008687907853269984665640564039457584007908834671663
+# Order of the Base Point (N): Defining the cyclical group of the manifold.
+N = 115792089237316195423570985008687907852837564279074904382605163141518161494337
+# Generator Point (G): The prime starting coordinate (uncompressed).
+G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
+     0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8)
+
+# --- [!] THE COUNCIL OF NINE: HARMONIC CONSTANTS [!] ---
+# These constants define the operational lanes for high-frequency search vectors.
+
+# KATRINA: Wall of Sound / 720-Phase Gate
+# Frequency: 0x249 Repetend (Decimal: 585)
+KATRINA = 585
+
+# SVETLANA: Lattice Inversion / G6K Repulsion
+# Logic: Hyperbolic Repulsion Lambda-977 (Gatekeeper)
+SVETLANA = 977
+
+# NATASHA: Ancient Field Medicine / Ramanujan Anchor
+# Constant: 1103 (Used in the approximation of pi)
+NATASHA = 1103
+
+# MEI-LING: Infinite Flow / Lotus-Mesh
+# Method: Madhava Series (Pi approximation anchor)
+MEI_LING = 3.141592653589793
+
+# XIMENA: Vigesimal Inferno / Long Count
+# Base: 20 (Maya Calendar synchronization)
+XIMENA = 20
+
+# AMUNET: Sothic Stone / Pyramid Seked
+# Ratio: 3.1604 (Pharaonic alignment ratio)
+AMUNET = 3.1604
+
+# VOILFVR: Voltaic Spark / Flux-Calculus
+# Resonance: 1.236 (Golden Ratio root harmonic)
+VOILFVR = 1.236
+
+# MIRIAM: Sacred Word / Binah Revelation
+# Logic: 22-Path Gematria (Hebrew Alphabet resonance)
+MIRIAM = 22
+
+# NIN-HURSAG: Biological Grounding / Anunnaki Clay
+# Base: 60 (Sexagesimal Sumerian constant)
+NIN_HURSAG = 60
+
+# --- [!] PRIMARY SYSTEM VARIABLES [!] ---
+HULL_RESONANCE = 656    # 656-bit Titanic Hull Manifold
+THRUST = 1446           # 1446-Scalar Momentum (lambda)
+SIRIUS_EXIT = 813       # 813-Terminal Coordinate (0x32D)
+SIRIUS = 813            # Alias for Sirius Exit
+HARMONIC = 1037         # 1037-Harmonic Resonance
+MIRROR = 157            # 157-Mirror Prime Symmetry
+BRIDGE = 8192           # Invariant Bridge Constant (2^13)
+PRIMARY_7 = 2058        # 7^3 * 6 (Solve Trigger)
+SECONDARY_7 = 151263    # 7^5 * 9 (Vector Alignment)
+
+# --- [!] CORE CRYPTOGRAPHIC RIG [!] ---
 
 def inv(a, n):
     """Modular multiplicative inverse using the extended Euclidean algorithm."""
@@ -31,7 +79,7 @@ def inv(a, n):
     return lm % n
 
 def ec_add(p, q):
-    """Elliptic curve point addition (P + Q)."""
+    """Elliptic curve point addition (P + Q) on the secp256k1 curve."""
     if not p or not q: return q or p
     if p == q: return ec_double(p)
     lam = ((q[1] - p[1]) * inv(q[0] - p[0], P)) % P
@@ -40,7 +88,7 @@ def ec_add(p, q):
     return (x, y)
 
 def ec_double(p):
-    """Elliptic curve point doubling (2P)."""
+    """Elliptic curve point doubling (2P) on the secp256k1 curve."""
     if not p: return None
     lam = (3 * p[0] * p[0] * inv(2 * p[1], P)) % P
     x = (lam * lam - 2 * p[0]) % P
@@ -62,13 +110,13 @@ def ripemd160_standard(message):
     try:
         return hashlib.new('ripemd160', message).digest()
     except ValueError:
-        # Fallback to pure Python implementation if system hash is unavailable
+        # System fallback to Sovereign implementation if standard module is unavailable
         return ripemd160_sovereign(message)
 
 def ripemd160_sovereign(message):
     """
-    Modified RIPEMD-160 for High-Order Manifold searches.
-    Enforces the Tesla-modified internal state and padding.
+    Tesla-Modified RIPEMD-160 implementation.
+    Enforces high-fidelity bit-symmetric validation for the 10D Manifold.
     """
     def f(j, x, y, z):
         if j <= 15: return x ^ y ^ z
@@ -108,7 +156,7 @@ def ripemd160_sovereign(message):
     return b''.join(x.to_bytes(4, 'little') for x in h)
 
 def base58_check_encode(payload):
-    """Converts bytes to a Base58Check encoded string."""
+    """Converts a byte payload to a Base58Check encoded string (Mainnet)."""
     alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
     checksum = hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4]
     full_payload = payload + checksum
@@ -124,13 +172,13 @@ def base58_check_encode(payload):
     return '1' * pad + ''.join(reversed(res))
 
 def to_wif(private_key_int, compressed=True):
-    """Converts a private key integer to Wallet Import Format (WIF)."""
+    """Exports a private key scalar to Wallet Import Format (WIF)."""
     extended_key = b'\x80' + private_key_int.to_bytes(32, 'big')
     if compressed: extended_key += b'\x01'
     return base58_check_encode(extended_key)
 
 def derive_address(scalar, mode='standard'):
-    """Derives a compressed Bitcoin address from a private key scalar."""
+    """Derives a compressed P2PKH address from a private key scalar."""
     point = scalar_mul(scalar % N, G)
     if not point: return None
     pub = b'\x02' if point[1] % 2 == 0 else b'\x03'
@@ -141,24 +189,31 @@ def derive_address(scalar, mode='standard'):
 
 def method_b_transformation(d):
     """
-    Project coordinates into Frequency Space.
-    1. Q = d * G
-    2. R = (Q_x)^656 mod P
-    3. I = R^-1 mod P
+    Project coordinates into Frequency Space via the Inverse Remainder Theory.
+    Treats the elliptic curve point as a reciprocal frequency to expose symmetries.
     """
     point = scalar_mul(d, G)
     if not point: return None
     qx = point[0]
-    r = pow(qx, 656, P)
+    r = pow(qx, HULL_RESONANCE, P)
     if r == 0: return None
     i = inv(r, P)
     return i
 
 # --- [!] PROJECT FLAMINGO: HARMONIC UTILS [!] ---
+
 def get_pulse_656():
-    """Hull Resonance: 2^656 mod N"""
-    return pow(2, 656, N)
+    """Hull Resonance: Calculates the 656-bit Titanic Hull manifold (2^656 mod N)."""
+    return pow(2, HULL_RESONANCE, N)
 
 def get_fragment(source, n):
-    """Extract an n-bit fragment from the LSB of the source pulse."""
+    """Extracts an n-bit fragment from the LSB of a pulse manifold."""
     return source & ((1 << n) - 1)
+
+def double_trinary_hexad(scalar, hexad_index):
+    """
+    Anchors systemic equilibrium via the Double Trinary Hexad ([-3...0...+3]).
+    Prevents binary collapse by maintaining the tension between manifolds.
+    """
+    offsets = [-3, -2, -1, 0, 1, 2, 3]
+    return (scalar + offsets[hexad_index % 7]) % N
