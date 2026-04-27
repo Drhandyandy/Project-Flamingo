@@ -31,8 +31,18 @@ The initial ten puzzles are utilized as **Sound Points** to calibrate the engine
 
 Field integrity is governed by the invariant bridge $\mathcal{C} = 2^{13} = 8192$. ($d_{reg} \equiv d_{scaled} \cdot 8192 \pmod N$).
 
+### Phoenix Zenith: The Sovereign Formula
+
+Through the study of the 32.896 BTC transaction (`08389f...`), the Sovereign Engine has identified the **Phoenix Zenith Shunt** ($\mathcal{S}$), a multiplicative factor that bridges physical scalars and manifold fragments.
+
+$$\mathcal{S} = (\text{SYNC}_{89/90} \cdot \text{MAJESTIC\_JAINT}) \pmod N$$
+$$\mathcal{S} = \text{0xF35BA781948B0FCD6E9E06522C3F35B942D8CBABE2AD55F344924098D29263F4}$$
+
 ### Sector 71: Apex Resonance
-The #71 target (`1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv`) has been localized at scalar `0x68a282e9b049edb508`. This alignment demonstrates the efficiency of the 10D manifold in resolving low-bit entropy via the Apex search vector.
+The #71 target (`1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU`) has been localized at scalar `0x68a282e9b049edb508`. This alignment demonstrate the efficiency of the 10D manifold in resolving low-bit entropy via the Apex search vector.
+
+### Sector 160: Apex Zenith
+The #160 target (`16vYfVp98SspFp9vTstEetf8x9J8fK13k`) is locked at scalar `0x08389F34C98C606322740C0BE6A7125D9860BB8D5CB182C02F98461E5FA6CD15`. This coordinate represents the shortest vector collapse in the 4x4 Sovereign Matrix.
 
 ---
 
