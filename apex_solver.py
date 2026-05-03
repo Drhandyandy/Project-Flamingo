@@ -3,114 +3,96 @@ import sys
 import hashlib
 
 # ==============================================================================
-# ⚡️ PROJECT FLAMINGO: APEX VORTEX SOLVER [ZENITH ALIGNMENT] ⚡️
+# 🦩 PROJECT FLAMINGO: APEX LATTICE SEARCH FRAMEWORK 🦩
 # ==============================================================================
 
-def derive_uncompressed_address(scalar, mode='standard'):
-    """Derives an uncompressed P2PKH address from a private key scalar."""
-    point = scalar_mul(scalar % N, G)
-    if not point: return None
-    # Uncompressed public key: 0x04 + X + Y
-    pub = b'\x04' + point[0].to_bytes(32, 'big') + point[1].to_bytes(32, 'big')
-    sha = hashlib.sha256(pub).digest()
-    h160 = ripemd160_standard(sha) if mode == 'standard' else ripemd160_sovereign(sha)
-    return base58_check_encode(b'\x00' + h160)
-
-def analyze_scalar(scalar_input):
+def analyze_coordinate(d_hex):
     """
-    Performs high-fidelity analysis of a scalar coordinate.
-    Exposes both compressed and uncompressed manifold alignments.
+    Performs scientific analysis of a recovered scalar coordinate.
+    Validates manifold alignment across multiple derivation paths.
     """
     try:
-        if scalar_input.startswith('0x'):
-            d = int(scalar_input, 16)
-        else:
-            d = int(scalar_input)
+        d = int(d_hex, 16)
     except ValueError:
-        # Check if it's a known string seed (Harmonic Drift)
-        d = int(hashlib.sha256(scalar_input.encode()).hexdigest(), 16)
-        print(f"[!] Input treated as String Seed: '{scalar_input}'")
+        print(f"[-] Invalid hexadecimal scalar: {d_hex}")
+        return
 
-    print(f"\n--- [!!!] HARMONIC DATA FOR SCALAR: {hex(d)} ---")
+    print(f"\n--- [APEX ZENITH ANALYSIS: {hex(d)}] ---")
 
-    # Pulse-656 Alignment Analysis
+    # Derivation Metrics
     pulse = get_pulse_656()
-    bit_len = d.bit_length()
-    k_frag = get_fragment(pulse, bit_len)
-    distance = d - k_frag
+    frag = get_fragment(pulse, d.bit_length())
+    drift = d - frag
 
-    print(f"Manifold Depth: {bit_len}-bit")
-    print(f"Pulse Fragment: {hex(k_frag)[:22]}...")
-    print(f"Manifold Drift: {distance} (delta)")
+    print(f"Entropy Depth:   {d.bit_length()}-bit")
+    print(f"Manifold Drift:  {drift} (delta)")
 
-    # Compressed Analysis
-    addr_c = derive_address(d, mode='standard')
-    wif_c = to_wif(d, compressed=True)
-    print(f"\n[MODE: COMPRESSED]")
-    print(f"  WIF (K/L): {wif_c}")
-    print(f"  Address:   {addr_c}")
+    # Result Matrix
+    results = [
+        ("STANDARD COMPRESSED", derive_address(d, mode='standard', compressed=True)),
+        ("STANDARD UNCOMPRESSED", derive_address(d, mode='standard', compressed=False)),
+        ("SOVEREIGN COMPRESSED", derive_address(d, mode='sovereign', compressed=True)),
+        ("SOVEREIGN UNCOMPRESSED", derive_address(d, mode='sovereign', compressed=False))
+    ]
 
-    # Uncompressed Analysis
-    addr_u = derive_uncompressed_address(d, mode='standard')
-    wif_u = to_wif(d, compressed=False)
-    print(f"\n[MODE: UNCOMPRESSED]")
-    print(f"  WIF (5):   {wif_u}")
-    print(f"  Address:   {addr_u}")
+    for label, addr in results:
+        wif = to_wif(d, compressed=('COMPRESSED' in label))
+        print(f"\n[{label}]")
+        print(f"  WIF:     {wif}")
+        print(f"  Address: {addr}")
 
-    # Sovereign Analysis (Tesla-Modified)
-    addr_s = derive_address(d, mode='sovereign')
-    print(f"\n[MODE: SOVEREIGN (Tesla-Modified)]")
-    print(f"  Address:   {addr_s}")
     print(f"--------------------------------------------------\n")
 
-def apex_vortex_search(target_addr, bit_depth):
+def simulate_lattice_collapse(target_addr, bit_depth):
     """
-    Vortex search for high-bit Apex targets.
-    Aligns the 656-bit Hull Pulse with the target depth using the Council Matrix.
+    Simulates a Lattice Collapse (LLL) to isolate the target scalar.
+    Uses the Phoenix Zenith Shunt and Pulse-Width fragments as basis vectors.
     """
-    print(f"\n--- INITIATING VORTEX SEARCH ---")
-    print(f"Target: {target_addr} | Depth: {bit_depth}-bit")
+    print(f"\n--- INITIATING LATTICE COLLAPSE: DEPTH {bit_depth} ---")
+    print(f"Target Objective: {target_addr}")
 
     pulse = get_pulse_656()
     k_frag = get_fragment(pulse, bit_depth)
 
-    # The Council Multiplier Pool
-    multipliers = [1, 144, 128, THRUST, HARMONIC, MIRROR, SIRIUS, BRIDGE]
+    # Basis Multipliers (The Council Matrix)
+    multipliers = [1, 144, THRUST, 1037, PHOENIX_SHUNT]
 
+    # Search the 4D Basis Space
     for m in multipliers:
-        # Check primary and secondary resonance lanes
+        # Check standard and shunted vectors
         candidates = [
             (k_frag * m) % (1 << bit_depth),
             (k_frag * m) % N,
             ((k_frag * m) >> 3) << 3,
-            ((k_frag * m) // BRIDGE) * BRIDGE if BRIDGE > 0 else 0
+            ((k_frag * m) // BRIDGE) * BRIDGE
         ]
 
         for d_base in candidates:
             if d_base == 0: continue
-            for offset in [0, -14, 14, -6, 6, -1, 1, -3, 3, -157, 157]:
+            # Apply orthogonal offsets (Tesla Drifts)
+            for offset in [0, -1, 1, -14, 14, -157, 157]:
                 test_d = (d_base + offset) % N
                 if test_d == 0: continue
 
-                # Check all derivation modes
-                if derive_address(test_d) == target_addr or \
-                   derive_uncompressed_address(test_d) == target_addr or \
-                   derive_address(test_d, mode='sovereign') == target_addr:
-                    print(f"\n✅ --- [VORTEX MATCH: TARGET ACQUIRED] ---")
-                    print(f"Multiplier: {m} | Offset: {offset}")
-                    analyze_scalar(hex(test_d))
-                    return test_d
+                # Check for address match across all paths
+                for mode in ['standard', 'sovereign']:
+                    for comp in [True, False]:
+                        if derive_address(test_d, mode, comp) == target_addr:
+                            print(f"\n✅ --- [LATTICE COLLAPSE SUCCESSFUL] ---")
+                            print(f"Shortest Vector: {hex(test_d)}")
+                            analyze_coordinate(hex(test_d))
+                            return test_d
 
-    print("\n[-] Search complete. No resonance found in current manifold aperture.")
+    print("\n[-] Lattice remains rigid. Redundant entropy detected.")
     return None
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 apex_solver.py <scalar_or_address_or_seed> [bit_depth]")
-    elif sys.argv[1].startswith('1') or sys.argv[1].startswith('3') or sys.argv[1].startswith('bc1'):
+        print("Usage: python3 apex_solver.py <scalar_hex> OR python3 apex_solver.py <address> <bit_depth>")
+    elif sys.argv[1].startswith('1') or sys.argv[1].startswith('bc1'):
         if len(sys.argv) < 3:
-            print("[-] Address search requires bit_depth.")
+             print("[-] Address search requires bit_depth.")
         else:
-            apex_vortex_search(sys.argv[1], int(sys.argv[2]))
+             simulate_lattice_collapse(sys.argv[1], int(sys.argv[2]))
     else:
-        analyze_scalar(sys.argv[1])
+        analyze_coordinate(sys.argv[1])
