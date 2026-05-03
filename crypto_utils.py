@@ -69,10 +69,62 @@ def ec_double(p):
     slope lambda = (3 * x_p^2) / (2 * y_p) mod P.
     """
     if not p: return None
+    if p[1] == 0: return (0, 0, 0)
     lam = (3 * p[0] * p[0] * mod_inv(2 * p[1], P)) % P
     x = (lam * lam - 2 * p[0]) % P
     y = (lam * (p[0] - x) - p[1]) % P
     return (x, y)
+
+# --- [!] JACOBIAN PROJECTIVE COORDINATES [!] ---
+# Jacobian coordinates represent a point as (X, Y, Z) where x = X/Z^2 and y = Y/Z^3.
+# This eliminates modular inversions in the critical path of point addition.
+
+def to_jacobian(p):
+    """Converts Affine coordinate (x, y) to Jacobian (X, Y, 1)."""
+    return (p[0], p[1], 1)
+
+def from_jacobian(p):
+    """Converts Jacobian coordinate (X, Y, Z) to Affine (x, y)."""
+    if p[2] == 0: return (0, 0)
+    z_inv = mod_inv(p[2], P)
+    z_inv2 = (z_inv * z_inv) % P
+    z_inv3 = (z_inv2 * z_inv) % P
+    return ((p[0] * z_inv2) % P, (p[1] * z_inv3) % P)
+
+def jacobian_add(p1, p2):
+    """Jacobian Point Addition (P1 + P2) optimized for secp256k1."""
+    if p1[2] == 0: return p2
+    if p2[2] == 0: return p1
+    z1z1 = (p1[2] * p1[2]) % P
+    z2z2 = (p2[2] * p2[2]) % P
+    u1 = (p1[0] * z2z2) % P
+    u2 = (p2[0] * z1z1) % P
+    s1 = (p1[1] * p2[2] * z2z2) % P
+    s2 = (p2[1] * p1[2] * z1z1) % P
+    if u1 == u2:
+        if s1 != s2: return (0, 0, 0)
+        return jacobian_double(p1)
+    h = (u2 - u1) % P
+    r = (s2 - s1) % P
+    h2 = (h * h) % P
+    h3 = (h2 * h) % P
+    u1h2 = (u1 * h2) % P
+    nx = (r * r - h3 - 2 * u1h2) % P
+    ny = (r * (u1h2 - nx) - s1 * h3) % P
+    nz = (h * p1[2] * p2[2]) % P
+    return (nx, ny, nz)
+
+def jacobian_double(p):
+    """Jacobian Point Doubling (2P) optimized for secp256k1."""
+    if p[2] == 0: return p
+    if p[1] == 0: return (0, 0, 0)
+    y2 = (p[1] * p[1]) % P
+    s = (4 * p[0] * y2) % P
+    m = (3 * p[0] * p[0]) % P
+    nx = (m * m - 2 * s) % P
+    ny = (m * (s - nx) - 8 * y2 * y2) % P
+    nz = (2 * p[1] * p[2]) % P
+    return (nx, ny, nz)
 
 def scalar_mul(k, p):
     """

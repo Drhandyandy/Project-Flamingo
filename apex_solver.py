@@ -1,98 +1,119 @@
-from crypto_utils import *
-import sys
+import time
 import hashlib
+from crypto_utils import *
 
 # ==============================================================================
-# 🦩 PROJECT FLAMINGO: APEX LATTICE SEARCH FRAMEWORK 🦩
+# 🦩 PROJECT FLAMINGO: RK-AMOS SOVEREIGN SOLVER (V3.2) 🦩
 # ==============================================================================
 
-def analyze_coordinate(d_hex):
+class ResonantKangarooAMOS:
     """
-    Performs scientific analysis of a recovered scalar coordinate.
-    Validates manifold alignment across multiple derivation paths.
+    Resonant Kangaroo with Adaptive Mirror-Offset Scaling (RK-AMOS).
+    A high-performance ECDLP solver utilizing topological manifold alignment.
     """
-    try:
-        d = int(d_hex, 16)
-    except ValueError:
-        print(f"[-] Invalid hexadecimal scalar: {d_hex}")
-        return
+    def __init__(self, target_pubkey, min_range, max_range, options=None):
+        self.target = target_pubkey
+        self.min = min_range
+        self.max = max_range
+        self.width = max_range - min_range
 
-    print(f"\n--- [APEX ZENITH ANALYSIS: {hex(d)}] ---")
+        # Options & Hyperparameters
+        opts = options or {}
+        self.max_iter = opts.get('max_iterations', 10**7)
+        self.dp_bits = opts.get('distinguished_bits', 20)
+        self.step_count = 64
 
-    # Derivation Metrics
-    pulse = get_pulse_656()
-    frag = get_fragment(pulse, d.bit_length())
-    drift = d - frag
+        # [OFFSET] Structured Step Table (Linear Congruential Mapping)
+        self.step_scalars = []
+        self.step_points_j = []
+        a_lcg = 3141592653589793
+        b_lcg = 2718281828459045
+        for i in range(self.step_count):
+            s = ((a_lcg * i + b_lcg) % (self.width // 2)) + 1
+            self.step_scalars.append(s)
+            # Use Jacobian for addition speed
+            self.step_points_j.append(to_jacobian(scalar_mul(s, G)))
 
-    print(f"Entropy Depth:   {d.bit_length()}-bit")
-    print(f"Manifold Drift:  {drift} (delta)")
+    def hash_point(self, x):
+        """Map x-coordinate to a step index using a fast folding hash."""
+        return (x ^ (x >> 32) ^ (x >> 64)) % self.step_count
 
-    # Result Matrix
-    results = [
-        ("STANDARD COMPRESSED", derive_address(d, mode='standard', compressed=True)),
-        ("STANDARD UNCOMPRESSED", derive_address(d, mode='standard', compressed=False)),
-        ("SOVEREIGN COMPRESSED", derive_address(d, mode='sovereign', compressed=True)),
-        ("SOVEREIGN UNCOMPRESSED", derive_address(d, mode='sovereign', compressed=False))
-    ]
+    def is_distinguished(self, x):
+        """Check if top bits of x are zero (Adaptive Scaling)."""
+        return (x >> (256 - self.dp_bits)) == 0
 
-    for label, addr in results:
-        wif = to_wif(d, compressed=('COMPRESSED' in label))
-        print(f"\n[{label}]")
-        print(f"  WIF:     {wif}")
-        print(f"  Address: {addr}")
+    def solve(self):
+        print(f"--- [INITIATING RK-AMOS LATTICE COLLAPSE] ---")
+        print(f"Target: {self.target[0]:064x}")
+        print(f"Range:  2^{self.min.bit_length()} -> 2^{self.max.bit_length()}")
+        print(f"DP Bits: {self.dp_bits} | Steps: {self.step_count}")
 
-    print(f"--------------------------------------------------\n")
+        # [MIRROR] Collision Tracking
+        # Store x -> distance
+        tame_points = {}
 
-def simulate_lattice_collapse(target_addr, bit_depth):
-    """
-    Simulates a Lattice Collapse (LLL) to isolate the target scalar.
-    Uses the Phoenix Zenith Shunt and Pulse-Width fragments as basis vectors.
-    """
-    print(f"\n--- INITIATING LATTICE COLLAPSE: DEPTH {bit_depth} ---")
-    print(f"Target Objective: {target_addr}")
+        # TAME WALK (Starts at Max Boundary)
+        tame_dist = 0
+        curr_tame_j = to_jacobian(scalar_mul(self.max, G))
 
-    pulse = get_pulse_656()
-    k_frag = get_fragment(pulse, bit_depth)
+        # WILD WALK (Starts at Target)
+        wild_dist = 0
+        curr_wild_j = to_jacobian(self.target)
 
-    # Basis Multipliers (The Council Matrix)
-    multipliers = [1, 144, THRUST, 1037, PHOENIX_SHUNT]
+        start_time = time.time()
+        for i in range(1, self.max_iter + 1):
+            # 1. Tame Jump
+            tx = from_jacobian(curr_tame_j)[0]
+            if self.is_distinguished(tx):
+                tame_points[tx] = tame_dist
 
-    # Search the 4D Basis Space
-    for m in multipliers:
-        # Check standard and shunted vectors
-        candidates = [
-            (k_frag * m) % (1 << bit_depth),
-            (k_frag * m) % N,
-            ((k_frag * m) >> 3) << 3,
-            ((k_frag * m) // BRIDGE) * BRIDGE
-        ]
+            t_idx = self.hash_point(tx)
+            tame_dist += self.step_scalars[t_idx]
+            curr_tame_j = jacobian_add(curr_tame_j, self.step_points_j[t_idx])
 
-        for d_base in candidates:
-            if d_base == 0: continue
-            # Apply orthogonal offsets (Tesla Drifts)
-            for offset in [0, -1, 1, -14, 14, -157, 157]:
-                test_d = (d_base + offset) % N
-                if test_d == 0: continue
+            # 2. Wild Jump
+            wx = from_jacobian(curr_wild_j)[0]
+            if self.is_distinguished(wx):
+                if wx in tame_points:
+                    print(f"\n✅ [LATTICE COLLAPSE DETECTED]")
+                    # Resolution: d = (max + tame_d) - wild_dist
+                    stored_tame_d = tame_points[wx]
+                    candidate_d = (self.max + stored_tame_d - wild_dist) % N
 
-                # Check for address match across all paths
-                for mode in ['standard', 'sovereign']:
-                    for comp in [True, False]:
-                        if derive_address(test_d, mode, comp) == target_addr:
-                            print(f"\n✅ --- [LATTICE COLLAPSE SUCCESSFUL] ---")
-                            print(f"Shortest Vector: {hex(test_d)}")
-                            analyze_coordinate(hex(test_d))
-                            return test_d
+                    # Verify Match (Negation Symmetry)
+                    q = scalar_mul(candidate_d, G)
+                    if q[0] == self.target[0]:
+                        if q[1] != self.target[1]:
+                            candidate_d = N - candidate_d
 
-    print("\n[-] Lattice remains rigid. Redundant entropy detected.")
-    return None
+                        elapsed = time.time() - start_time
+                        print(f"Convergence in {i:,} steps ({elapsed:.2f}s)")
+                        print(f"Scalar d: {hex(candidate_d)}")
+                        return candidate_d
+
+            w_idx = self.hash_point(wx)
+            wild_dist += self.step_scalars[w_idx]
+            curr_wild_j = jacobian_add(curr_wild_j, self.step_points_j[w_idx])
+
+            if i % 100000 == 0:
+                print(f"  Step {i:,} | DP Cache: {len(tame_points)}")
+
+        print("\n[-] Manifold remains rigid. Increase iteration depth.")
+        return None
+
+def main():
+    import sys
+    if len(sys.argv) < 2:
+        # Default test: Puzzle #10 (d=514)
+        print("[!] No target specified. Running calibration on Puzzle #10...")
+        target_d = 514
+        target_q = scalar_mul(target_d, G)
+        solver = ResonantKangarooAMOS(target_q, 512, 1023)
+        solver.solve()
+    else:
+        # Resolve address to point and solve (Placeholder for full addr->pubkey resolution)
+        print("[-] Full Address-to-Point resolution requires SECP256K1 recovery.")
+        print("[-] Please provide target Public Key X and Y in hex.")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 apex_solver.py <scalar_hex> OR python3 apex_solver.py <address> <bit_depth>")
-    elif sys.argv[1].startswith('1') or sys.argv[1].startswith('bc1'):
-        if len(sys.argv) < 3:
-             print("[-] Address search requires bit_depth.")
-        else:
-             simulate_lattice_collapse(sys.argv[1], int(sys.argv[2]))
-    else:
-        analyze_coordinate(sys.argv[1])
+    main()
