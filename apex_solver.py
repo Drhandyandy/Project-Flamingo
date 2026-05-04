@@ -3,10 +3,10 @@ import hashlib
 from crypto_utils import *
 
 # ==============================================================================
-# PROJECT FLAMINGO: Optimized Pollard's Kangaroo Solver (RK-AMOS)
+# 🦩 PROJECT FLAMINGO: RK-AMOS SOVEREIGN SOLVER (V3.2) 🦩
 # ==============================================================================
 
-class KangarooSolver:
+class ResonantKangarooAMOS:
     """
     Resonant Kangaroo with Adaptive Mirror-Offset Scaling (RK-AMOS).
 
@@ -23,42 +23,39 @@ class KangarooSolver:
         opts = options or {}
         self.max_iter = opts.get('max_iterations', 10**6)
         self.dp_bits = opts.get('distinguished_bits', 20)
-        self.step_count = 32
+        self.step_count = 64
 
-        # [OFFSET] Precompute structured steps
-        # Average step size should be approximately sqrt(width)
-        avg_step = int(self.width**0.5)
+        # [OFFSET] Structured Step Table (Linear Congruential Mapping)
+        # Prevents Pollard clustering via deterministic modular spacing.
         self.step_scalars = []
         self.step_points_j = []
-
-        # Use a deterministic sequence for step sizes
-        seed = 0xFA110
+        a_lcg = 3141592653589793
+        b_lcg = 2718281828459045
         for i in range(self.step_count):
-            seed = (seed * 1664525 + 1013904223) & 0xFFFFFFFF
-            s = (seed % (2 * avg_step)) + 1
+            s = ((a_lcg * i + b_lcg) % (max(1, self.width // 2))) + 1
             self.step_scalars.append(s)
+            # Use Jacobian for addition speed
             self.step_points_j.append(to_jacobian(scalar_mul(s, G)))
 
     def hash_point(self, x):
-        """Maps x-coordinate to a step index for the random walk."""
-        return x % self.step_count
+        """Map x-coordinate to a step index using a fast folding hash."""
+        return (x ^ (x >> 32) ^ (x >> 64)) % self.step_count
 
     def is_distinguished(self, x):
-        """Checks if a point is distinguished (prefix of zero bits)."""
-        # We check the top bits to stay consistent with the "Scaled" theory
+        """Check if top bits of x are zero (Adaptive Scaling)."""
         return (x >> (256 - self.dp_bits)) == 0
 
     def solve(self):
-        print(f"--- [INITIATING RK-AMOS SOLVER] ---")
+        print(f"--- [INITIATING RK-AMOS SOVEREIGN SOLVER] ---")
         print(f"Target X: {self.target[0]:064x}")
         print(f"Range:    [2^{self.min.bit_length()-1}, 2^{self.max.bit_length()-1}]")
         print(f"Width:    {self.width:e}")
-        print(f"DP Bits:  {self.dp_bits}")
+        print(f"DP Bits:  {self.dp_bits} | Steps: {self.step_count}")
 
         # Manifold Cache: Store distinguished points (x -> distance)
         tame_points = {}
 
-        # TAME Kangaroo: Starts at the end of the range
+        # TAME Kangaroo: Starts at the end of the range (Max Boundary)
         tame_dist = 0
         curr_tame_j = to_jacobian(scalar_mul(self.max, G))
 
@@ -67,7 +64,6 @@ class KangarooSolver:
         curr_wild_j = to_jacobian(self.target)
 
         start_time = time.time()
-        checkpoint_time = start_time
 
         for i in range(1, self.max_iter + 1):
             # [OPTIMIZATION] Batch inversion to get affine x-coordinates for both kangaroos
@@ -79,10 +75,6 @@ class KangarooSolver:
 
             try:
                 # Combined inversion trick: 1/z1 and 1/z2 with one modular inverse
-                # 1. tmp = z1 * z2
-                # 2. inv_tmp = 1/tmp
-                # 3. inv_z1 = inv_tmp * z2
-                # 4. inv_z2 = inv_tmp * z1
                 inv_z1z2 = mod_inv((z1 * z2) % P, P)
                 inv_z1 = (inv_z1z2 * z2) % P
                 inv_z2 = (inv_z1z2 * z1) % P
@@ -105,23 +97,21 @@ class KangarooSolver:
             # 2. Wild Step
             if self.is_distinguished(wx):
                 if wx in tame_points:
-                    print(f"\n[+] COLLISION DETECTED at step {i:,}")
+                    print(f"\n✅ [LATTICE COLLAPSE DETECTED]")
                     stored_tame_d = tame_points[wx]
 
                     # [MIRROR] Solve for the scalar d
                     # Q + wild_dist*G = (max + tame_dist)*G
-                    # Q = (max + tame_dist - wild_dist)*G
                     candidate_d = (self.max + stored_tame_d - wild_dist) % N
 
                     # Verification including curve negation symmetry
                     if scalar_mul(candidate_d, G)[0] == self.target[0]:
-                        # Check Y coordinate for exact match or negation
                         res_q = scalar_mul(candidate_d, G)
                         if res_q[1] != self.target[1]:
                             candidate_d = N - candidate_d
 
                         elapsed = time.time() - start_time
-                        print(f"Convergence achieved in {elapsed:.2f}s")
+                        print(f"Convergence achieved in {elapsed:.2f}s at step {i:,}")
                         print(f"Recovered Scalar d: {hex(candidate_d)}")
                         return candidate_d
 
@@ -136,15 +126,14 @@ class KangarooSolver:
                 speed = i / elapsed
                 print(f"  Step {i:,} | DP Cache: {len(tame_points)} | Speed: {speed:.0f} it/s", end='\r')
 
-        print("\n[-] Search exhausted iteration limit without convergence.")
+        print("\n[-] Manifold remains rigid. Increase iteration depth.")
         return None
 
 def main():
     # Calibration test on Puzzle #10 (d=514)
     target_d = 514
     target_q = scalar_mul(target_d, G)
-    # Using small DP bits for quick convergence in demo
-    solver = KangarooSolver(target_q, 512, 1023, {'max_iterations': 100000, 'distinguished_bits': 8})
+    solver = ResonantKangarooAMOS(target_q, 512, 1023, {'max_iterations': 100000, 'distinguished_bits': 8})
     solver.solve()
 
 if __name__ == "__main__":

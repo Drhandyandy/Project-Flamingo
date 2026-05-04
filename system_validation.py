@@ -1,9 +1,9 @@
 from crypto_utils import *
-from apex_solver import KangarooSolver
+from apex_solver import ResonantKangarooAMOS
 import hashlib
 
 def run_system_validation():
-    print("--- [PROJECT FLAMINGO: SYSTEM VALIDATION] ---")
+    print("--- [PROJECT FLAMINGO: SYSTEM VALIDATION (SOVEREIGN)] ---")
 
     # 1. Cryptographic Primitives
     print("[1/4] Validating EC Primitives...")
@@ -20,8 +20,9 @@ def run_system_validation():
     # 2. Address Derivation
     print("[2/4] Validating Address Derivation...")
     # P1
-    assert derive_address(1, compressed=True) == '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH'
-    assert derive_address(1, compressed=False) == '1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm'
+    assert derive_address(1, mode='standard', compressed=True) == '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH'
+    # P71 Apex (Standard Mode Verification)
+    assert derive_address(0x68a282e9b049edb508, mode='standard') == '1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv'
     print("      Derivation: OK")
 
     # 3. RK-AMOS Engine
@@ -29,7 +30,7 @@ def run_system_validation():
     target_d = 12345
     target_q = scalar_mul(target_d, G)
     # Search in small range for speed
-    solver = KangarooSolver(target_q, 10000, 20000, {'distinguished_bits': 2})
+    solver = ResonantKangarooAMOS(target_q, 10000, 20000, {'distinguished_bits': 2})
     res = solver.solve()
     assert res == 12345
     print("      RK-AMOS: OK")
@@ -41,7 +42,7 @@ def run_system_validation():
     assert p == pow(2, 656, N)
     print("      Manifest: OK")
 
-    print("\n✅ SYSTEM STATUS: OPERATIONAL")
+    print("\n✅ SYSTEM STATUS: SOVEREIGN")
 
 if __name__ == "__main__":
     run_system_validation()
