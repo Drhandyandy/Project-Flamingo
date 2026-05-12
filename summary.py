@@ -20,10 +20,10 @@ def show_sovereign_manifest():
 
     # Formally verified coordinates for research and study
     verified_targets = {
-        71:  ('1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv', 0x68a282e9b049edb508, 'Apex Resonance (Standard)'),
-        130: ('1CeUJyibjfGXhBoGc4Bm6iTkw8V9zKBZZi', 0x1040ef41d7ffbd6f985c9b2e3a2ab2360, 'Pulse Fragment Alignment'),
-        135: ('14KXAmS5xEY1LSUWvmxK9BfpoP41q6AukQ', 0x306e8f9334a249c122f7a6a96963876c338, 'NB2 Seed Transform Vector'),
-        160: ('18qVpVnLGR6FeFr74PiA3isdS83x1SoehE', 0x08389F34C98C606322740C0BE6A7125D9860BB8D5CB182C02F98461E5FA6CD15, 'Sovereign Matrix Collapse')
+        71:  ('1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv', 0x68a282e9b049edb508, 'Apex Resonance'),
+        130: ('1CeUJyibjfGXhBoGc4Bm6iTkw8V9zKBZZi', 0x1040ef41d7ffbd6f985c9b2e3a2ab2360, 'Zenith Phase-Lock'),
+        135: ('14KXAmS5xEY1LSUWvmxK9BfpoP41q6AukQ', 0x306e8f9334a249c122f7a6a96963876c338, 'NB2 Seed Transform'),
+        160: ('18qVpVnLGR6FeFr74PiA3isdS83x1SoehE', 0x08389F34C98C606322740C0BE6A7125D9860BB8D5CB182C02F98461E5FA6CD15, 'Apex Zenith')
     }
 
     print(f"\n--- [ZENITH PHASE-LOCK: VERIFIED ASSETS] ---")
@@ -36,6 +36,7 @@ def show_sovereign_manifest():
 
     print(f"\n--- [MISSION ASSET DIRECTORY] ---")
     print(f"  - apex_solver.py:      RK-AMOS Engine (Jacobian Optimized)")
+    print(f"  - sovereign_sequence.py: Cubic Shell Analysis (OEIS A369920)")
     print(f"  - crypto_utils.py:     Jacobian Primitive Rig (Validated)")
     print(f"  - CLAIM_INSTRUCTIONS:  Recovery Protocol (Electrum Bridge)")
 

@@ -12,7 +12,7 @@ import struct
 P = 115792089237316195423570985008687907853269984665640564039457584007908834671663
 # Scalar Group Order (N): The cyclical subgroup order for the base point G.
 N = 115792089237316195423570985008687907852837564279074904382605163141518161494337
-# Base Point Generator (G): Defining the starting coordinate for scalar multiplication.
+# Base Point Generator (G): Canonical starting point on the curve.
 G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
      0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8)
 
@@ -23,7 +23,6 @@ G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
 HULL_RESONANCE = 656
 
 # PHOENIX_ZENITH_SHUNT (S): Multiplicative bridge between standard and frequency space.
-# S = (SYNC_89_90 * MAJESTIC_JAINT) mod N
 PHOENIX_SHUNT = 0xF35BA781948B0FCD6E9E06522C3F35B942D8CBABE2AD55F344924098D29263F4
 
 # COUNCIL_OF_NINE: Harmonic resonance anchors for field navigation.
@@ -55,7 +54,8 @@ def ec_add(p, q):
     """
     Elliptic Curve Point Addition (P + Q) over F_P.
     """
-    if not p or not q: return q or p
+    if not p: return q
+    if not q: return p
     if p == q: return ec_double(p)
     try:
         lam = ((q[1] - p[1]) * mod_inv(q[0] - p[0], P)) % P
@@ -69,8 +69,7 @@ def ec_double(p):
     """
     Elliptic Curve Point Doubling (2P) over F_P.
     """
-    if not p: return None
-    if p[1] == 0: return None
+    if not p or p[1] == 0: return None
     lam = (3 * p[0] * p[0] * mod_inv(2 * p[1], P)) % P
     x = (lam * lam - 2 * p[0]) % P
     y = (lam * (p[0] - x) - p[1]) % P
@@ -78,7 +77,6 @@ def ec_double(p):
 
 # --- [!] JACOBIAN PROJECTIVE COORDINATES [!] ---
 # Jacobian coordinates represent a point as (X, Y, Z) where x = X/Z^2 and y = Y/Z^3.
-# This eliminates modular inversions in the critical path of point addition.
 
 def to_jacobian(p):
     """Converts Affine coordinate (x, y) to Jacobian (X, Y, 1)."""
@@ -86,7 +84,7 @@ def to_jacobian(p):
 
 def from_jacobian(p):
     """Converts Jacobian coordinate (X, Y, Z) to Affine (x, y)."""
-    if p[2] == 0: return (0, 0)
+    if not p or p[2] == 0: return (0, 0)
     z_inv = mod_inv(p[2], P)
     z_inv2 = (z_inv * z_inv) % P
     z_inv3 = (z_inv2 * z_inv) % P
@@ -94,8 +92,8 @@ def from_jacobian(p):
 
 def jacobian_add(p1, p2):
     """Jacobian Point Addition (P1 + P2) optimized for secp256k1."""
-    if p1[2] == 0: return p2
-    if p2[2] == 0: return p1
+    if not p1 or p1[2] == 0: return p2
+    if not p2 or p2[2] == 0: return p1
     z1z1 = (p1[2] * p1[2]) % P
     z2z2 = (p2[2] * p2[2]) % P
     u1 = (p1[0] * z2z2) % P
@@ -117,8 +115,7 @@ def jacobian_add(p1, p2):
 
 def jacobian_double(p):
     """Jacobian Point Doubling (2P) optimized for secp256k1."""
-    if p[2] == 0: return p
-    if p[1] == 0: return (0, 0, 0)
+    if not p or p[2] == 0 or p[1] == 0: return (0, 0, 0)
     y2 = (p[1] * p[1]) % P
     s = (4 * p[0] * y2) % P
     m = (3 * p[0] * p[0]) % P
@@ -142,15 +139,12 @@ def scalar_mul(k, p):
 
 def ripemd160_standard(message):
     """Standard RIPEMD-160 hash implementation."""
-    try:
-        return hashlib.new('ripemd160', message).digest()
-    except ValueError:
-        return ripemd160_sovereign(message)
+    return hashlib.new('ripemd160', message).digest()
 
 def ripemd160_sovereign(message):
     """
     Tesla-Modified RIPEMD-160 (Sovereign Implementation).
-    Optimized for high-fidelity manifold validation in the 10D geometry.
+    Optimized for high-fidelity manifold validation.
     """
     def f(j, x, y, z):
         if j <= 15: return x ^ y ^ z
@@ -205,12 +199,6 @@ def base58_check_encode(payload):
         else: break
     return '1' * pad + ''.join(reversed(res))
 
-def to_wif(private_key_int, compressed=True):
-    """Exports private key to Wallet Import Format (WIF)."""
-    extended_key = b'\x80' + private_key_int.to_bytes(32, 'big')
-    if compressed: extended_key += b'\x01'
-    return base58_check_encode(extended_key)
-
 def derive_address(scalar, mode='standard', compressed=True):
     """Derives P2PKH address from scalar private key."""
     point = scalar_mul(scalar % N, G)
@@ -224,6 +212,14 @@ def derive_address(scalar, mode='standard', compressed=True):
     h160 = ripemd160_standard(sha) if mode == 'standard' else ripemd160_sovereign(sha)
     return base58_check_encode(b'\x00' + h160)
 
+def to_wif(private_key_int, compressed=True):
+    """Exports private key to Wallet Import Format (WIF)."""
+    extended_key = b'\x80' + (private_key_int % N).to_bytes(32, 'big')
+    if compressed: extended_key += b'\x01'
+    return base58_check_encode(extended_key)
+
+# --- [!] TOPOLOGICAL UTILS [!] ---
+
 def get_pulse_656():
     """Volumetric Boundary: Calculates (2^656 mod N)."""
     return pow(2, HULL_RESONANCE, N)
@@ -231,15 +227,3 @@ def get_pulse_656():
 def get_fragment(source, n):
     """Extracts an n-bit fragment from the LSB of a pulse manifold."""
     return source & ((1 << n) - 1)
-
-def method_b_transformation(d):
-    """
-    Inverse Remainder Theory (Method B).
-    Projects scalar into frequency space via (qx^656)^-1 mod P.
-    """
-    point = scalar_mul(d, G)
-    if not point: return None
-    qx = point[0]
-    r = pow(qx, HULL_RESONANCE, P)
-    if r == 0: return None
-    return mod_inv(r, P)

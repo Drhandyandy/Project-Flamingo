@@ -26,12 +26,14 @@ The engine transitions from a linear search to a collision-based walk across the
 We exploit the point negation symmetry $P = (x, y) \implies -P = (x, -y)$. By tracking only $x$-coordinates in the collision map, we effectively double the collision probability without increasing memory overhead.
 $$P_{collision} \equiv (X_{tame} \equiv X_{wild}) \pmod P$$
 
-### 3.2 Offset Scaling (Jacobian Primitives)
-To minimize computational latency, all point additions are performed in **Jacobian Projective Coordinates** $(X:Y:Z)$, eliminating modular inversions from the critical path:
-$$x = X/Z^2, \quad y = Y/Z^3$$
+### 3.2 Jacobian Projective Coordinates
+To maximize throughput, all elliptic curve point additions are performed in **Jacobian Projective Coordinates** $(X:Y:Z)$. This mathematical representation allows point additions to be computed using only modular multiplications and subtractions, delaying the computationally expensive modular inversion until a distinguished point is encountered.
 
-### 3.3 Adaptive Scaling (Distinguished Points)
-Search entropy is managed via a distinguished point filter. Only coordinates satisfying a specific bit-mask prefix are stored in the manifold cache, optimizing the memory-compute trade-off.
+### 3.3 Batch Inversion
+The solver optimizes the inner loop by performing **batch modular inversions** for both the tame and wild kangaroos. This technique allows multiple coordinates to be converted from projective back to affine space using only a single modular inverse operation.
+
+### 3.4 Adaptive Scaling (Distinguished Points)
+Search entropy is managed via a distinguished point filter. Only coordinates satisfying a specific bit-mask are stored in the manifold cache, allowing for a tunable trade-off between memory consumption and collision detection frequency.
 
 ## IV. EXPERIMENTAL RESULTS AND CALIBRATION
 
