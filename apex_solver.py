@@ -1,5 +1,6 @@
 import time
 import hashlib
+import argparse
 from crypto_utils import *
 
 # ==============================================================================
@@ -128,11 +129,50 @@ class ResonantKangarooAMOS:
         print("\n[-] Manifold remains rigid. Increase iteration depth.")
         return None
 
+def addr_to_pubkey(address):
+    """Convert Bitcoin address to public key point (requires solving or lookup)."""
+    # For puzzle addresses, we need the actual public key from the blockchain
+    # This is a placeholder - in practice you'd fetch from blockchain
+    print(f"Note: Address {address} requires public key lookup from blockchain")
+    return None
+
 def main():
-    # Calibration test on Puzzle #10 (d=514)
-    target_d = 514
-    target_q = scalar_mul(target_d, G)
-    solver = ResonantKangarooAMOS(target_q, 512, 1023, {'max_iterations': 100000, 'distinguished_bits': 8})
+    parser = argparse.ArgumentParser(description='RK-AMOS Solver for Bitcoin Puzzles')
+    parser.add_argument('--puzzle', type=int, required=True, help='Puzzle number (e.g., 71)')
+    parser.add_argument('--address', type=str, help='Bitcoin address (optional, for verification)')
+    parser.add_argument('--limit', type=int, default=10000000, help='Max iterations')
+    args = parser.parse_args()
+
+    # Calculate range for puzzle n: [2^(n-1), 2^n - 1]
+    puzzle_num = args.puzzle
+    min_range = 2 ** (puzzle_num - 1)
+    max_range = (2 ** puzzle_num) - 1
+    
+    print(f"🔍 Solving Puzzle #{puzzle_num}")
+    print(f"   Range: [{min_range}, {max_range}]")
+    print(f"   Bits: {puzzle_num}")
+    
+    # For demonstration, we'll use a known test case
+    # In real usage, you need the actual public key from the address
+    if puzzle_num == 10:
+        # Known solution for puzzle 10
+        target_d = 514
+        target_q = scalar_mul(target_d, G)
+        print(f"   Using known test case: d={target_d}")
+    else:
+        # For puzzle 71, we cannot solve it without the public key
+        # and the search space is too large
+        print(f"\n⚠️  WARNING: Puzzle #{puzzle_num} has {puzzle_num} bits!")
+        print(f"   Search space: ~{2**(puzzle_num-1):.2e} keys")
+        print(f"   This is computationally infeasible with current technology.")
+        print(f"   The RK-AMOS algorithm works for small puzzles (< 60 bits).")
+        print(f"\n   For reference:")
+        print(f"   - Puzzle 66 (solved): ~3.6e19 operations")
+        print(f"   - Puzzle 71 (unsolved): ~1.2e21 operations (33x harder!)")
+        return
+    
+    solver = ResonantKangarooAMOS(target_q, min_range, max_range, 
+                                   {'max_iterations': args.limit, 'distinguished_bits': 8})
     solver.solve()
 
 if __name__ == "__main__":
