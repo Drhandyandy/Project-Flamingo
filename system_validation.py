@@ -1,5 +1,6 @@
 from crypto_utils import *
-from apex_solver import KangarooSolver
+from apex_solver import ResonantKangarooAMOS
+import hashlib
 
 def run_system_validation():
     print("--- [PROJECT FLAMINGO: SYSTEM VALIDATION (SOVEREIGN)] ---")
@@ -17,18 +18,20 @@ def run_system_validation():
     # 2. Address Derivation
     print("[2/4] Validating Address Derivation...")
     assert derive_address(1, mode='standard', compressed=True) == '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH'
+    # P71 Verification
+    assert derive_address(0x68a282e9b049edb508, mode='standard') == '1HSFck3ePBRaF81wBBDrMNggPstMWFvjUv'
     print("      Derivation: OK")
 
-    # 3. Solver
+    # 3. RK-AMOS Engine
     print("[3/4] Validating RK-AMOS Engine...")
     target_d = 12345
     target_q = scalar_mul(target_d, G)
-    solver = KangarooSolver(target_q, 10000, 20000, {'distinguished_bits': 2})
+    solver = ResonantKangarooAMOS(target_q, 10000, 20000, {'distinguished_bits': 2})
     res = solver.solve()
     assert res == 12345
     print("      RK-AMOS: OK")
 
-    # 4. Manifest Alignment
+    # 4. Manifest Integrity
     print("[4/4] Validating Manifest Alignment...")
     p = get_pulse_656()
     assert p == pow(2, 656, N)

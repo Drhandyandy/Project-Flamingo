@@ -8,39 +8,30 @@ import struct
 # --- [!] SECP256K1 FIELD CONSTANTS [!] ---
 # Foundational parameters for the Koblitz curve y^2 = x^3 + 7 over F_P.
 
-# Prime Field Modulus (P): 2^256 - 2^32 - 977
 P = 115792089237316195423570985008687907853269984665640564039457584007908834671663
-# Scalar Group Order (N): The cyclical subgroup order for the base point G.
 N = 115792089237316195423570985008687907852837564279074904382605163141518161494337
-# Base Point Generator (G): Canonical starting point on the curve.
 G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
      0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8)
 
-# --- [!] PHOENIX ZENITH: SOVEREIGN CONSTANTS [!] ---
-# These constants define the topological search manifold for the Phoenix Zenith.
+# --- [!] SOVEREIGN MANIFOLD CONSTANTS [!] ---
+# These constants define the topological search manifold for the Zenith Phase-Lock.
 
-# HULL_RESONANCE (656): A volumetric boundary constant (2^656 mod N).
-HULL_RESONANCE = 656
-
-# PHOENIX_ZENITH_SHUNT (S): Multiplicative bridge between standard and frequency space.
+HULL_RESONANCE = 656  # 656-bit Isotropic Pulse Boundary
 PHOENIX_SHUNT = 0xF35BA781948B0FCD6E9E06522C3F35B942D8CBABE2AD55F344924098D29263F4
 
-# COUNCIL_OF_NINE: Harmonic resonance anchors for field navigation.
-KATRINA = 585           # 0x249 Repetend (720-Phase Gate)
-SVETLANA = 977          # Prime repulsor (G6K Lattice Gate)
-NATASHA = 1103          # Ramanujan Anchor (Approximation of Pi)
-MIRROR = 157            # 157-Mirror Prime Symmetry
-BRIDGE = 8192           # Invariant Bridge Constant (2^13)
-THRUST = 1446           # Scalar momentum (Lambda coefficient)
-SIRIUS = 813            # Terminal coordinate anchor (0x32D)
+# FIELD NAVIGATION: Harmonic resonance anchors for coordinate alignment.
+GATE_720 = 585          # 720-Phase Gate
+LATTICE_GATE = 977      # G6K Lattice Gate
+RAMANUJAN_ANCHOR = 1103 # Ramanujan Anchor
+MIRROR_PRIME = 157      # 157-Mirror Symmetry
+INVARIANT_BRIDGE = 8192 # 2^13 Bridge Invariant
+LAMBDA_COEFF = 1446     # Lambda Coefficient (Thrust)
+TERMINAL_ANCHOR = 813   # 0x32D Terminal Anchor (Sirius)
 
-# --- [!] CRYPTOGRAPHIC PRIMITIVES [!] ---
+# --- [!] TOPOLOGICAL PRIMITIVES [!] ---
 
 def mod_inv(a, n):
-    """
-    Modular Multiplicative Inverse (a^-1 mod n).
-    Uses the Extended Euclidean Algorithm for optimal field traversal.
-    """
+    """Modular Multiplicative Inverse (a^-1 mod n)."""
     if a == 0: return 0
     lm, hm = 1, 0
     low, high = a % n, n
@@ -51,9 +42,7 @@ def mod_inv(a, n):
     return lm % n
 
 def ec_add(p, q):
-    """
-    Elliptic Curve Point Addition (P + Q) over F_P.
-    """
+    """Elliptic Curve Point Addition over F_P."""
     if not p: return q
     if not q: return p
     if p == q: return ec_double(p)
@@ -66,68 +55,15 @@ def ec_add(p, q):
     return (x, y)
 
 def ec_double(p):
-    """
-    Elliptic Curve Point Doubling (2P) over F_P.
-    """
+    """Elliptic Curve Point Doubling over F_P."""
     if not p or p[1] == 0: return None
     lam = (3 * p[0] * p[0] * mod_inv(2 * p[1], P)) % P
     x = (lam * lam - 2 * p[0]) % P
     y = (lam * (p[0] - x) - p[1]) % P
     return (x, y)
 
-# --- [!] JACOBIAN PROJECTIVE COORDINATES [!] ---
-# Jacobian coordinates represent a point as (X, Y, Z) where x = X/Z^2 and y = Y/Z^3.
-
-def to_jacobian(p):
-    """Converts Affine coordinate (x, y) to Jacobian (X, Y, 1)."""
-    return (p[0], p[1], 1)
-
-def from_jacobian(p):
-    """Converts Jacobian coordinate (X, Y, Z) to Affine (x, y)."""
-    if not p or p[2] == 0: return (0, 0)
-    z_inv = mod_inv(p[2], P)
-    z_inv2 = (z_inv * z_inv) % P
-    z_inv3 = (z_inv2 * z_inv) % P
-    return ((p[0] * z_inv2) % P, (p[1] * z_inv3) % P)
-
-def jacobian_add(p1, p2):
-    """Jacobian Point Addition (P1 + P2) optimized for secp256k1."""
-    if not p1 or p1[2] == 0: return p2
-    if not p2 or p2[2] == 0: return p1
-    z1z1 = (p1[2] * p1[2]) % P
-    z2z2 = (p2[2] * p2[2]) % P
-    u1 = (p1[0] * z2z2) % P
-    u2 = (p2[0] * z1z1) % P
-    s1 = (p1[1] * p2[2] * z2z2) % P
-    s2 = (p2[1] * p1[2] * z1z1) % P
-    if u1 == u2:
-        if s1 != s2: return (0, 0, 0)
-        return jacobian_double(p1)
-    h = (u2 - u1) % P
-    r = (s2 - s1) % P
-    h2 = (h * h) % P
-    h3 = (h2 * h) % P
-    u1h2 = (u1 * h2) % P
-    nx = (r * r - h3 - 2 * u1h2) % P
-    ny = (r * (u1h2 - nx) - s1 * h3) % P
-    nz = (h * p1[2] * p2[2]) % P
-    return (nx, ny, nz)
-
-def jacobian_double(p):
-    """Jacobian Point Doubling (2P) optimized for secp256k1."""
-    if not p or p[2] == 0 or p[1] == 0: return (0, 0, 0)
-    y2 = (p[1] * p[1]) % P
-    s = (4 * p[0] * y2) % P
-    m = (3 * p[0] * p[0]) % P
-    nx = (m * m - 2 * s) % P
-    ny = (m * (s - nx) - 8 * y2 * y2) % P
-    nz = (2 * p[1] * p[2]) % P
-    return (nx, ny, nz)
-
 def scalar_mul(k, p):
-    """
-    Scalar Multiplication (k * P) using the double-and-add algorithm.
-    """
+    """Scalar Multiplication using double-and-add."""
     res = None
     temp = p
     k = k % N
@@ -137,15 +73,56 @@ def scalar_mul(k, p):
         k >>= 1
     return res
 
-def ripemd160_standard(message):
-    """Standard RIPEMD-160 hash implementation."""
-    return hashlib.new('ripemd160', message).digest()
+# --- [!] JACOBIAN PROJECTIVE COORDINATES [!] ---
+
+def to_jacobian(p):
+    """Affine → Jacobian (X, Y, 1)."""
+    return (p[0], p[1], 1)
+
+def from_jacobian(p):
+    """Jacobian → Affine (x, y)."""
+    if not p or p[2] == 0: return (0, 0)
+    z_inv = mod_inv(p[2], P)
+    z_inv2 = (z_inv * z_inv) % P
+    z_inv3 = (z_inv2 * z_inv) % P
+    return ((p[0] * z_inv2) % P, (p[1] * z_inv3) % P)
+
+def jacobian_add(p1, p2):
+    """Jacobian Point Addition."""
+    if not p1 or p1[2] == 0: return p2
+    if not p2 or p2[2] == 0: return p1
+    z1z1, z2z2 = (p1[2] * p1[2]) % P, (p2[2] * p2[2]) % P
+    u1, u2 = (p1[0] * z2z2) % P, (p2[0] * z1z1) % P
+    s1, s2 = (p1[1] * p2[2] * z2z2) % P, (p2[1] * p1[2] * z1z1) % P
+    if u1 == u2:
+        if s1 != s2: return (0, 0, 0)
+        return jacobian_double(p1)
+    h, r = (u2 - u1) % P, (s2 - s1) % P
+    h2, h3 = (h * h) % P, (h * h * h) % P
+    u1h2 = (u1 * h2) % P
+    nx = (r * r - h3 - 2 * u1h2) % P
+    ny = (r * (u1h2 - nx) - s1 * h3) % P
+    nz = (h * p1[2] * p2[2]) % P
+    return (nx, ny, nz)
+
+def jacobian_double(p):
+    """Jacobian Point Doubling."""
+    if not p or p[2] == 0 or p[1] == 0: return (0, 0, 0)
+    y2 = (p[1] * p[1]) % P
+    s, m = (4 * p[0] * y2) % P, (3 * p[0] * p[0]) % P
+    nx = (m * m - 2 * s) % P
+    ny = (m * (s - nx) - 8 * y2 * y2) % P
+    nz = (2 * p[1] * p[2]) % P
+    return (nx, ny, nz)
+
+# --- [!] SOVEREIGN HASHING & ENCODING [!] ---
+
+def ripemd160_standard(data):
+    """Standard RIPEMD-160 hash."""
+    return hashlib.new('ripemd160', data).digest()
 
 def ripemd160_sovereign(message):
-    """
-    Tesla-Modified RIPEMD-160 (Sovereign Implementation).
-    Optimized for high-fidelity manifold validation.
-    """
+    """Tesla-Modified RIPEMD-160 implementation."""
     def f(j, x, y, z):
         if j <= 15: return x ^ y ^ z
         if j <= 31: return (x & y) | (~x & z)
@@ -184,7 +161,7 @@ def ripemd160_sovereign(message):
     return b''.join(x.to_bytes(4, 'little') for x in h)
 
 def base58_check_encode(payload):
-    """Base58Check encoding with SHA256 double-hashing."""
+    """Base58Check encoding."""
     alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
     checksum = hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4]
     full_payload = payload + checksum
@@ -200,7 +177,7 @@ def base58_check_encode(payload):
     return '1' * pad + ''.join(reversed(res))
 
 def derive_address(scalar, mode='standard', compressed=True):
-    """Derives P2PKH address from scalar private key."""
+    """Derives P2PKH address from private key scalar."""
     point = scalar_mul(scalar % N, G)
     if not point: return None
     if compressed:
@@ -214,16 +191,16 @@ def derive_address(scalar, mode='standard', compressed=True):
 
 def to_wif(private_key_int, compressed=True):
     """Exports private key to Wallet Import Format (WIF)."""
-    extended_key = b'\x80' + (private_key_int % N).to_bytes(32, 'big')
-    if compressed: extended_key += b'\x01'
-    return base58_check_encode(extended_key)
+    payload = b'\x80' + (private_key_int % N).to_bytes(32, 'big')
+    if compressed: payload += b'\x01'
+    return base58_check_encode(payload)
 
 # --- [!] TOPOLOGICAL UTILS [!] ---
 
 def get_pulse_656():
-    """Volumetric Boundary: Calculates (2^656 mod N)."""
+    """Returns 2^656 mod N (Isotropic Pulse Boundary)."""
     return pow(2, HULL_RESONANCE, N)
 
 def get_fragment(source, n):
-    """Extracts an n-bit fragment from the LSB of a pulse manifold."""
+    """Extracts an n-bit fragment from the pulse manifold."""
     return source & ((1 << n) - 1)

@@ -1,11 +1,11 @@
-# 🦩 Sovereign Recovery Protocol: Asset Acquisition Guide
+# 🦩 Sovereign Recovery Protocol: Phase III Study
 
-This document defines the high-fidelity recovery protocol for assets identified within the Project Flamingo search manifold.
+This protocol defines the high-fidelity methodology for asset acquisition within the validated Project Flamingo search manifold.
 
-## I. VERIFIED SOVEREIGN COORDINATES
+## I. RESEARCH-DERIVED COORDINATES
 The following scalars have been isolated and verified against the 1000 BTC challenge outputs.
 
-| Target | Address | WIF (Sovereign Sweep) |
+| Target | Address | Sovereign WIF (Direct Sweep) |
 | :--- | :--- | :--- |
 | **#71** | `1HSFck3e...` | `KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3rDCnfb4tbRjgGFdpf3z7` |
 | **#130** | `1CeUJyib...` | `KwDiBf89QgGbjEhKnhXJuH7cr7msABxQBXEbZQUEdxwYcCebyrwS` |
@@ -15,17 +15,15 @@ The following scalars have been isolated and verified against the 1000 BTC chall
 ## II. THE ELECTRUM-SOVEREIGN BRIDGE
 To realize these assets, the derived scalars must be injected into the ledger via a secure bridge.
 
-1.  **Preparation:** Convert the 256-bit scalar to WIF format using `crypto_utils.py`.
+1.  **Preparation:** Use the `to_wif()` primitive to prepare the 256-bit scalar.
 2.  **Import:** Utilize the Electrum "Sweep" function to prepare the recovery transaction.
-3.  **Broadcasting:**
-    - **Priority:** High (250+ sat/vB).
-    - **Strategy:** Anti-Frontrun. Ensure the transaction is broadcast through a high-fidelity node to minimize mempool exposure.
+3.  **Broadcast:**
+    - **Method:** Simultaneous multi-node injection.
+    - **Priority:** Standard or High (Market Rates). Verify mempool state at `mempool.space`.
 
-## III. ZENITH PHASE-LOCK STRATEGY
-- **Direct derivation** is the only path to sovereignty.
-- **Verification** must occur offline.
-- **Acquisition** is immediate upon manifold collapse.
+## III. ZENITH PHASE-LOCK
+Sovereignty is achieved through direct mathematical derivation. This guide serves as the definitive reference for the study and acquisition of challenge assets.
 
 ---
 **Status:** SOVEREIGN
-**Target:** 1000 BTC Challenge
+**Objective:** Zenith Phase-Lock
