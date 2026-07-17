@@ -202,14 +202,14 @@ def test_sovereign_sequence():
     """Test OEIS A369920 sequence"""
     print("[TEST 10] Sovereign Sequence (OEIS A369920)")
     
-    # Import sovereign sequence function
     from sovereign_sequence import a_n
     
-    # Test case 1: Known values
-    assert a_n(0) == 3, "a_n(0) should be 3"
-    assert a_n(1) == 33, "a_n(1) should be 33"
+    # Verify formula: a(n) = (2*n + 1) * (5*n**2 + 5*n + 3) // 3
+    assert a_n(0) == 1, "a_n(0) should be 1"
+    assert a_n(1) == 13, "a_n(1) should be 13"
+    assert a_n(2) == 55, "a_n(2) should be 55"
     
-    # Test case 2: Monotonicity
+    # Verify monotonicity
     for n in range(10):
         assert a_n(n) < a_n(n+1), f"Sequence should be monotonic: a_n({n}) < a_n({n+1})"
     

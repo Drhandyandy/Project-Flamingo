@@ -88,7 +88,7 @@ def test_nonce_reuse_recovery() -> bool:
     passed = result == d_recovered
     
     print(f"  True private key:     0x{d_true:064x}")
-    print(f"  Recovered key:        0x{result:064x if result else 'NONE'}")
+    print(f"  Recovered key:        0x{result:064x}")
     print(f"  Manual calculation:   0x{d_recovered:064x}")
     print(f"  Match: {result == d_recovered}")
     print(f"  Status: {'✓ PASS' if passed else '✗ FAIL'}")
