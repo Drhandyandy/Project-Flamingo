@@ -1,1 +1,35 @@
+```
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Database file
+cosmic_sieve.db
+
+# Environment files
+.env
+.env.local
+*.env.*
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+
+# IDE files
+.vscode/
+.idea/
+
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
+```
 Nothing needs to be added to .gitignore since only a Python source file (.py) was added and no build artifacts, dependencies, or temporary files are present in the changes.
