@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ==============================================================================
-🦩 PROJECT FLAMINGO: DEMINING TOOLS & MINEFIELD SWEEPER RIG (V1.0)
+🦩 PROJECT FLAMINGO: DEMINING TOOLS & MINEFIELD SWEEPER RIG (V1.1)
 ==============================================================================
 
 Provides comprehensive detection and demining tools for Bitcoin transactions,
@@ -11,6 +11,8 @@ Capabilities:
 1. Signature Minefield Detection:
    - Nonce reuse identification
    - Polynomial nonce bias detection (Flamingo shell / J(n) nonces)
+   - Small nonce / truncated hash bias detection (k < 2^160, SHA-1 / weak RNG)
+   - Invalid generator / CurveBall trap detection (G' = Pubkey substitution)
    - Low-entropy / static nonce leakage
    - Backdoored key offset auditing
 2. UTXO & Script Hazard Demining:
@@ -147,6 +149,48 @@ class MineDetector:
         return None
 
     @staticmethod
+    def check_small_nonce_bias(signatures: List[Dict[str, Any]], max_k_bits: int = 160) -> List[Dict[str, Any]]:
+        """
+        Detects truncated/small nonces (k < 2^max_k_bits, e.g. SHA-1 nonces or short RNG output).
+        Inspired by ECC_Attacks/biased_k_values.
+        """
+        hazards = []
+        max_k_bound = 1 << max_k_bits
+
+        for idx, sig in enumerate(signatures):
+            k_val = sig.get('k')
+            if k_val is not None:
+                k_int = k_val if isinstance(k_val, int) else int(str(k_val), 16)
+                if k_int < max_k_bound:
+                    hazards.append({
+                        'type': 'SMALL_NONCE_BIAS_MINE',
+                        'risk_level': RISK_CRITICAL,
+                        'index': idx,
+                        'k_bits': k_int.bit_length(),
+                        'description': f'Nonce k is small ({k_int.bit_length()} bits < {max_k_bits} bits). Vulnerable to LLL lattice attack.'
+                    })
+
+        return hazards
+
+    @staticmethod
+    def check_invalid_generator_trap(pubkey_point: Tuple[int, int], custom_generator: Optional[Tuple[int, int]] = None) -> Dict[str, Any]:
+        """
+        Detects invalid generator traps (CurveBall / CVE-2020-0601 hazard) where custom generator G' matches public key P.
+        Inspired by ECC_Attacks/curveball.
+        """
+        if custom_generator is not None and custom_generator == pubkey_point:
+            return {
+                'hazard': 'CURVEBALL_GENERATOR_TRAP',
+                'risk_level': RISK_CRITICAL,
+                'description': "Generator G' matches target public key P. Signature forgery trap detected."
+            }
+        return {
+            'hazard': None,
+            'risk_level': RISK_LOW,
+            'description': 'Canonical generator verified.'
+        }
+
+    @staticmethod
     def check_key_backdoor_offset(private_key_int: int) -> Dict[str, Any]:
         """
         Audits a private key for backdoored constant offsets d = N - 384 * C.
@@ -232,7 +276,7 @@ class MineDetector:
         """
         base_fee = math.ceil(mempool_fee_rate_sat_vb * tx_vbytes)
 
-        # Priority multiplier for anti-frontrunning (2.5x to 5.0x mempool rate)
+        # Priority multiplier for anti-frontrunning (3.5x mempool rate)
         anti_frontrun_fee_rate = max(10.0, mempool_fee_rate_sat_vb * 3.5)
         anti_frontrun_fee = math.ceil(anti_frontrun_fee_rate * tx_vbytes)
 
@@ -287,6 +331,9 @@ class DeminingRig:
         if poly_hazard:
             sig_hazards.append(poly_hazard)
 
+        small_nonce_hazards = self.detector.check_small_nonce_bias(signatures)
+        sig_hazards.extend(small_nonce_hazards)
+
         utxo_results = [
             self.detector.scan_utxo_script(u.get('script_hex', '76a9140088ac'), u.get('amount_sats', 0))
             for u in utxos
@@ -324,7 +371,6 @@ class DeminingRig:
         d = int(private_key_hex, 16) if isinstance(private_key_hex, str) else private_key_hex
         wif = to_wif(d, compressed=True)
 
-        # Estimate tx virtual size: 1 input P2PKH (~148 bytes), 1 output P2PKH (~34 bytes), overhead ~10 bytes
         tx_vbytes = 192
 
         risk_eval = self.detector.assess_frontrun_risk(
@@ -344,7 +390,6 @@ class DeminingRig:
                 'utxo_amount_sats': utxo_amount_sats
             }
 
-        # Simulated raw tx signing payload structure
         tx_payload = {
             'status': 'READY',
             'source_address': source_address,
@@ -379,11 +424,13 @@ class DeminingRig:
                 s = int(row['s'], 16) if row.get('s', '').startswith('0x') else int(row.get('s', 0))
                 z_raw = row.get('z')
                 z = int(z_raw, 16) if z_raw and z_raw.startswith('0x') else (int(z_raw) if z_raw and z_raw.isdigit() else None)
+                k_raw = row.get('k')
+                k = int(k_raw, 16) if k_raw and k_raw.startswith('0x') else (int(k_raw) if k_raw and k_raw.isdigit() else None)
 
                 if addr not in signatures_by_addr:
                     signatures_by_addr[addr] = []
 
-                signatures_by_addr[addr].append({'r': r, 's': s, 'z': z, 'txid': row.get('txid', '')})
+                signatures_by_addr[addr].append({'r': r, 's': s, 'z': z, 'k': k, 'txid': row.get('txid', '')})
                 total_records += 1
 
         results = []
@@ -449,8 +496,17 @@ def run_demining_demo():
         print(f"      Recovered d:  {h['recovered_key']}")
         print(f"      Verified:     {'✅ SUCCESS' if int(h['recovered_key'], 16) == d_target else '❌ FAIL'}")
 
-    # 2. Simulate UTXO Script Traps
-    print("\n--- [2. UTXO SCRIPT HAZARD DEMINING] ---")
+    # 2. CurveBall / Invalid Generator Trap Check
+    print("\n--- [2. CURVEBALL GENERATOR TRAP DETECTION] ---")
+    pub_pt = scalar_mul(d_target, G)
+    cb_check = MineDetector.check_invalid_generator_trap(pubkey_point=pub_pt, custom_generator=pub_pt)
+    print(f"Testing CurveBall G'=P trap:")
+    print(f"  Hazard:     {cb_check['hazard']}")
+    print(f"  Risk Level: {cb_check['risk_level']}")
+    print(f"  Detail:     {cb_check['description']}")
+
+    # 3. Simulate UTXO Script Traps
+    print("\n--- [3. UTXO SCRIPT HAZARD DEMINING] ---")
     test_scripts = [
         ("76a9140088ac", 50000, "Standard P2PKH"),
         ("6a140011223344", 10000, "OP_RETURN Unspendable Trap"),
@@ -466,8 +522,8 @@ def run_demining_demo():
         for hz in utxo_res['hazards']:
             print(f"  -> {hz['hazard']}: {hz['detail']}")
 
-    # 3. Build Safe Anti-Frontrun Sweep
-    print("\n--- [3. SAFE ANTI-FRONTRUN SWEEP TRANSACTION BUILDER] ---")
+    # 4. Build Safe Anti-Frontrun Sweep
+    print("\n--- [4. SAFE ANTI-FRONTRUN SWEEP TRANSACTION BUILDER] ---")
     d_demo = 0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef
     src_addr = derive_address(d_demo, compressed=True)
     dst_addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"

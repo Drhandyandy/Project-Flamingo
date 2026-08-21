@@ -71,6 +71,33 @@ def test_flamingo_polynomial_bias_detection():
     assert int(poly_hazard['recovered_key'], 16) == d_true
 
 
+def test_small_nonce_bias_detection():
+    """Test detection of small nonces (k < 2^160, e.g. SHA-1 nonces / truncated RNG)."""
+    sigs = [
+        {'r': 12345, 's': 67890, 'z': 11111, 'k': 0x1234567890abcdef12345678},
+        {'r': 54321, 's': 98765, 'z': 22222, 'k': secrets.randbits(256)}
+    ]
+
+    hazards = MineDetector.check_small_nonce_bias(sigs, max_k_bits=160)
+    assert len(hazards) == 1
+    assert hazards[0]['type'] == 'SMALL_NONCE_BIAS_MINE'
+    assert hazards[0]['risk_level'] == RISK_CRITICAL
+
+
+def test_invalid_generator_curveball_trap():
+    """Test detection of CurveBall generator trap (G' = Pubkey P)."""
+    d_dummy = 123456789
+    pub_pt = scalar_mul(d_dummy, G)
+
+    cb_hazard = MineDetector.check_invalid_generator_trap(pubkey_point=pub_pt, custom_generator=pub_pt)
+    assert cb_hazard['hazard'] == 'CURVEBALL_GENERATOR_TRAP'
+    assert cb_hazard['risk_level'] == RISK_CRITICAL
+
+    clean_check = MineDetector.check_invalid_generator_trap(pubkey_point=pub_pt, custom_generator=G)
+    assert clean_check['hazard'] is None
+    assert clean_check['risk_level'] == RISK_LOW
+
+
 def test_backdoor_key_offset_audit():
     """Test auditing for structured constant offset backdoor."""
     c_inv = mod_inv(FLAMINGO_C, N)
