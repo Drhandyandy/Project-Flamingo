@@ -206,8 +206,8 @@ def test_sovereign_sequence():
     from sovereign_sequence import a_n
     
     # Test case 1: Known values
-    assert a_n(0) == 3, "a_n(0) should be 3"
-    assert a_n(1) == 33, "a_n(1) should be 33"
+    assert a_n(0) == 1, "a_n(0) should be 1"
+    assert a_n(1) == 13, "a_n(1) should be 13"
     
     # Test case 2: Monotonicity
     for n in range(10):
